@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Редактировать задачу</title>
+</head>
+
+    <script>
+        // Обработчик события вставки контента
+        function handlePaste(event) {
+            var items = event.clipboardData.items;
+
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+
+                // Проверяем тип элемента, чтобы обрабатывать только изображения
+                if (item.type.indexOf("image") !== -1) {
+                    var file = item.getAsFile();
+                    var reader = new FileReader();
+
+                    // Читаем файл как Data URL и добавляем изображение на страницу
+                    reader.onload = function(event) {
+                        var imageUrl = event.target.result;
+                        var imgElement = document.createElement("img");
+                        imgElement.src = imageUrl;
+                        document.getElementById("image-container").appendChild(imgElement);
+                    };
+
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        // Добавляем обработчик события вставки контента
+        document.addEventListener("paste", handlePaste);
+    </script>
+
+
+
+<body>
+    <h1><a href="{% url 'index' %}">←</a></h1>
+    <h1>Редактировать задачу</h1>
+    <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div id="image-container">
+        {% for image in image_urls %}
+            <img src="{{ image }}" alt="Image">
+        {% endfor %}
+    </div>
+    <input type="file" name="image" id="image-input" multiple>
+    <button type="submit">Сохранить</button>
+</form>
+</body>
+</html>
