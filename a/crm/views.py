@@ -1,59 +1,43 @@
-from django.db import transaction
-from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-
 from .models import Task, Status, Image
 from .forms import TaskForm
 from django.core.files.base import ContentFile
 import base64
+import os
 
+def save_image(request, task):
+    if 'image' in request.FILES:
+        image_file = request.FILES['image']
+        image = Image.objects.create(file=image_file, task=task)
+        task.images.add(image)
+    elif 'image_base64' in request.POST:
+        image_base64 = request.POST['image_base64']
+        if ';' in image_base64:
+            format, imgstr = image_base64.split(';base64,')
+            ext = format.split('/')[-1]
+            image_file = ContentFile(base64.b64decode(imgstr), name='image.' + ext)
+            image = Image.objects.create(file=image_file, task=task)
+            task.images.add(image)
 
-@transaction.atomic
 def edit_task(request, task_id):
     task = get_object_or_404(Task, pk=task_id)
     if request.method == 'POST':
         form = TaskForm(request.POST, request.FILES, instance=task)
         if form.is_valid():
+            save_image(request, task)
             form.save()
-
-            # Получаем текущий список URL изображений из базы данных
-            image_urls = list(task.images.values_list('image.url', flat=True))
-
-            # Обрабатываем добавленные изображения из запроса
-            if 'image' in request.FILES:
-                image_files = request.FILES.getlist('image')
-                for image_file in image_files:
-                    image = Image.objects.create(task=task, image=image_file)
-                    image_urls.append(image.image.url)
-
-            # Сохраняем обновленный список URL изображений в сессию
-            request.session['image_urls'] = image_urls
-
             return redirect('edit_task', task_id=task_id)
     else:
         form = TaskForm(instance=task)
+    return render(request, 'crm/edit_task.html', {'form': form, 'task': task})
 
-    # Получаем список URL изображений из сессии и передаем его в шаблон
-    image_urls = request.session.get('image_urls', [])
-    return render(request, 'crm/edit_task.html', {'form': form, 'task': task, 'image_urls': image_urls})
-
-
-@csrf_exempt
-def save_image(request):
-    if request.method == 'POST':
-        image_file = request.FILES.get('image_file')
-        task_id = request.POST.get('task_id')
-
-        task = get_object_or_404(Task, id=task_id)
-        image = Image.objects.create(task=task, image=image_file)
-
-        image_url = image.image.url  # Get the URL of the saved image
-
-        return JsonResponse({'success': True, 'image_url': image_url})
-    else:
-        return JsonResponse({'success': False})
-
+def delete_image(request, image_id):
+    image = get_object_or_404(Image, pk=image_id)
+    task_id = image.task_id
+    image_path = image.file.path  # Получаем путь к файлу изображения
+    image.delete()  # Удаляем объект Image
+    os.remove(image_path)  # Удаляем файл из файловой системы
+    return redirect('edit_task', task_id=task_id)
 
 def index(request):
     statuses = Status.objects.all()

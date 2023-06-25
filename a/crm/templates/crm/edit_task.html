@@ -1,54 +1,51 @@
+<!-- edit_task.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <title>Редактировать задачу</title>
-</head>
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Обработчик события вставки контента
-        function handlePaste(event) {
-            var items = event.clipboardData.items;
+        $(document).ready(function() {
+            var imageContainer = $('#image-container');
+            var imageInput = $('#image_base64');
 
-            for (var i = 0; i < items.length; i++) {
-                var item = items[i];
-
-                // Проверяем тип элемента, чтобы обрабатывать только изображения
-                if (item.type.indexOf("image") !== -1) {
-                    var file = item.getAsFile();
-                    var reader = new FileReader();
-
-                    // Читаем файл как Data URL и добавляем изображение на страницу
-                    reader.onload = function(event) {
-                        var imageUrl = event.target.result;
-                        var imgElement = document.createElement("img");
-                        imgElement.src = imageUrl;
-                        document.getElementById("image-container").appendChild(imgElement);
-                    };
-
-                    reader.readAsDataURL(file);
+            $(document).on('paste', function(event) {
+                var items = (event.originalEvent || event).clipboardData.items;
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.type.indexOf('image') !== -1) {
+                        var file = item.getAsFile();
+                        var reader = new FileReader();
+                        reader.onload = function(event) {
+                            var imageUrl = event.target.result;
+                            var imgElement = $('<img>').attr('src', imageUrl);
+                            imageContainer.append(imgElement);
+                            imageInput.val(imageUrl);
+                        };
+                        reader.readAsDataURL(file);
+                    }
                 }
-            }
-        }
-
-        // Добавляем обработчик события вставки контента
-        document.addEventListener("paste", handlePaste);
+            });
+        });
     </script>
-
-
-
+</head>
 <body>
     <h1><a href="{% url 'index' %}">←</a></h1>
     <h1>Редактировать задачу</h1>
     <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="hidden" id="image_base64" name="image_base64">
+        <button type="submit">Сохранить</button>
+    </form>
+
+    <hr>
+    <h2>Картинки</h2>
     <div id="image-container">
-        {% for image in image_urls %}
-            <img src="{{ image }}" alt="Image">
+        {% for image in task.images.all %}
+            <p><img src="{{ image.file.url }}" alt="Картинка"><br><a href="{% url 'delete_image' image_id=image.id %}">Удалить</a></p>
+
         {% endfor %}
     </div>
-    <input type="file" name="image" id="image-input" multiple>
-    <button type="submit">Сохранить</button>
-</form>
 </body>
 </html>

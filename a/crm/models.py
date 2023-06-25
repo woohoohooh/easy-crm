@@ -1,6 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
+class Image(models.Model):
+    file = models.ImageField(upload_to='images')
+    task = models.ForeignKey('Task', on_delete=models.CASCADE, related_name='task_images')
+
 class Task(models.Model):
     name = models.CharField(max_length=1000)
     description = models.TextField()
@@ -10,8 +15,7 @@ class Task(models.Model):
     estimate_start = models.IntegerField()
     estimate_finish = models.IntegerField()
     estimate_team = models.IntegerField()
-    images = models.ManyToManyField('Image', related_name='tasks')
-    files = models.ManyToManyField('File')
+    images = models.ManyToManyField(Image, related_name='tasks')
     comments = models.ManyToManyField('Comment')
 
 class Status(models.Model):
@@ -24,8 +28,4 @@ class Comment(models.Model):
     text = models.TextField()
 
 class File(models.Model):
-    file = models.FileField(upload_to='task_files/')
-
-class Image(models.Model):
-    task = models.ForeignKey(Task, related_name='task_images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='images/')
+    file = models.FileField()
