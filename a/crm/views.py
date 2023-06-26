@@ -31,6 +31,12 @@ def edit_task(request, task_id):
         form = TaskForm(instance=task)
     return render(request, 'crm/edit_task.html', {'form': form, 'task': task})
 
+def estimates(estimate_finish, estimate_team):
+    if estimate_team:
+        return estimate_team
+    else:
+        return estimate_finish
+
 def delete_image(request, image_id):
     image = get_object_or_404(Image, pk=image_id)
     task_id = image.task_id
@@ -39,7 +45,7 @@ def delete_image(request, image_id):
     os.remove(image_path)  # Удаляем файл из файловой системы
     return redirect('edit_task', task_id=task_id)
 
-def index(request):
+def index_list(request):
     statuses = Status.objects.all()
     tasks_by_status = {}
     for status in statuses:
@@ -53,21 +59,7 @@ def create_task(request):
         task_form = TaskForm(request.POST)
         if task_form.is_valid():
             task_form.save()
-            return redirect('index')
+            return redirect('index_list')
     else:
         task_form = TaskForm()
     return render(request, 'crm/edit_task.html', {'task_form': task_form})
-
-def task_detail(request, task_id):
-    task = Task.objects.get(pk=task_id)
-    if request.method == 'POST':
-        form = TaskForm(request.POST, request.FILES, instance=task)
-        if form.is_valid():
-            form.save()
-    else:
-        form = TaskForm(instance=task)
-    context = {
-        'task': task,
-        'form': form,
-    }
-    return render(request, 'crm/task_detail.html', context)

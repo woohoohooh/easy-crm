@@ -2,21 +2,73 @@
 <html>
 <head>
     <title>Список задач</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <style>
+        .task-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .task-row {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        .task-cell {
+            flex-basis: 16.66%;
+            padding: 0px;
+            text-align: left;
+        }
+        .task-cell:first-child {
+            flex-basis: 33.33%;
+        }
+        .task-cell.comments {
+            flex-basis: 8.33%;
+        }
+        .status-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .table-header-row {
+        }
+    </style>
 </head>
 <body>
-    <h1>Список задач</h1>
-    <ul>
-        <li><a href="{% url 'create_task' %}">Создать задачу</a></li>
-    </ul>
-    {% for status, tasks in tasks_by_status.items %}
-        <h2>{{ status.name }}</h2>
-        <ul>
-            {% for task in tasks %}
-                <li><a href="{% url 'edit_task' task.id %}">{{ task.name }}</a></li>
-            {% empty %}
-                <li>Нет задач</li>
-            {% endfor %}
+    <div class="container">
+        <h1>Список задач</h1>
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'create_task' %}">Создать задачу</a>
+            </li>
         </ul>
-    {% endfor %}
+        <br>
+        <div class="task-table">
+            <div class="task-row table-header-row">
+                <div class="task-cell">Task name</div>
+                <div class="task-cell">Assignee</div>
+                <div class="task-cell">Count</div>
+                <div class="task-cell">Screenshots</div>
+                <div class="task-cell comments">Comments</div>
+            </div>
+            {% for status, tasks in tasks_by_status.items %}<br>
+                <div class="status-title">{{ status.name }}</div>
+                {% for task in tasks %}
+                    <div class="task-row">
+                        <div class="task-cell"><a href="{% url 'edit_task' task.id %}">{{ task.name }}</a></div>
+                        <div class="task-cell">{{ task.assign.username }}</div>
+                        <div class="task-cell">{{ task.estimate_team }}</div>
+                        <div class="task-cell">{% if task.images.all %}✓{% endif %}</div>
+                        <div class="task-cell comments">{{ task.comments.count }}</div>
+                    </div>
+                {% empty %}
+                    <div class="task-row">
+                        <div class="task-cell" colspan="5">Нет задач</div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        <br><br>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 </body>
 </html>

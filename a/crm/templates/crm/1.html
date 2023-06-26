@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Список задач</title>
+    <style>
+        .task {
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        .task h3 {
+            margin: 0;
+        }
+        .task p {
+            margin: 0;
+        }
+        .task .status {
+            font-weight: bold;
+        }
+        .task .assigned-to {
+            color: #888;
+        }
+        .task .images {
+            margin-top: 5px;
+        }
+        .task .comments {
+            margin-top: 5px;
+            color: #888;
+        }
+        .status-column {
+            float: right;
+            width: 150px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Список задач</h1>
+    <ul>
+        <li><a href="{% url 'create_task' %}">Создать задачу</a></li>
+    </ul>
+    {% for status, tasks in tasks_by_status.items %}
+        <div class="status-column">
+            <h2>{{ status.name }}</h2>
+        </div>
+        <div class="task-list">
+            {% for task in tasks %}
+                <div class="task">
+                    <h3>{{ task.name }}</h3>
+                    <p><span class="status">{{ task.status.name }}</span> - Назначена: <span class="assigned-to">{{ task.assign.username }}</span></p>
+                    <p>Начало: {{ task.start }}</p>
+                    <p>Оценка (начало): {{ task.estimate_start }}</p>
+                    <p>Оценка (окончание): {{ task.estimate_finish }}</p>
+                    <p>Оценка (команда): {{ task.estimate_team }}</p>
+                    {% if task.images.all %}
+                        <div class="images">Изображения: ✓</div>
+                    {% endif %}
+                    <div class="comments">Комментарии: {{ task.comments.count }}</div>
+                    <p><a href="{% url 'edit_task' task.id %}">Редактировать</a></p>
+                </div>
+            {% empty %}
+                <p>Нет задач</p>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</body>
+</html>
