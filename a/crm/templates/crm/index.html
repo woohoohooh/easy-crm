@@ -13,48 +13,83 @@
             border-bottom: 1px solid #ddd;
         }
         .task-cell {
-            flex-basis: 16.66%;
-            padding: 0px;
+            flex-basis: 25%;
             text-align: left;
         }
-        .task-cell:first-child {
-            flex-basis: 33.33%;
-        }
         .task-cell.comments {
-            flex-basis: 8.33%;
+            flex-basis: 16.66%;
         }
         .status-title {
             font-weight: bold;
             margin-bottom: 10px;
         }
-        .table-header-row {
+        .fixed-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #fff;
+            z-index: 1;
+        }
+        .container {
+            margin-top: 0px; /* Учтите высоту фиксированного меню */
+            overflow-x: auto;
+        }
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            z-index: 1;
+        }
+        .drag-handle {
+            cursor: grab;
+            display: inline-block;
+        }
+        .drag-handle:hover {
+            cursor: grab;
+        }
+        .dragging {
+            opacity: 0.7;
+            cursor: grabbing;
+        }
+        .drag-over {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Список задач</h1>
-        <ul class="nav">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'create_task' %}">Создать задачу</a>
-            </li>
-        </ul>
-        <br>
-        <div class="task-table">
-            <div class="task-row table-header-row">
-                <div class="task-cell">Task name</div>
-                <div class="task-cell">Assignee</div>
-                <div class="task-cell">Count</div>
-                <div class="task-cell">Screenshots</div>
-                <div class="task-cell comments">Comments</div>
+    <div class="fixed-menu">
+        <div class="container">
+            <div class="task-table">
+                <div class="task-row sticky-header">
+                    <div class="task-cell">Task</div>
+                    <div class="task-cell">Developer</div>
+                    <div class="task-cell">Minutes</div>
+                    <div class="task-cell">Images</div>
+                    <div class="task-cell comments">Comments</div>
+                </div>
             </div>
-            {% for status, tasks in tasks_by_status.items %}<br>
+        </div>
+    </div>
+    <div class="container"><br>
+        <div class="task-table">
+            {% for status, tasks in tasks_by_status.items %}
+                <br>
                 <div class="status-title">{{ status.name }}</div>
                 {% for task in tasks %}
-                    <div class="task-row">
+                    <div class="task-row draggable-task" data-task-id="{{ task.id }}" data-status-id="{{ status.id }}">
                         <div class="task-cell"><a href="{% url 'edit_task' task.id %}">{{ task.name }}</a></div>
                         <div class="task-cell">{{ task.assign.username }}</div>
-                        <div class="task-cell">{{ task.estimate_team }}</div>
+                        <div class="task-cell">
+                            {% if task.estimate_team %}
+                                {{ task.estimate_team }}
+                            {% elif task.estimate_finish %}
+                                {{ task.estimate_finish }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </div>
+
                         <div class="task-cell">{% if task.images.all %}✓{% endif %}</div>
                         <div class="task-cell comments">{{ task.comments.count }}</div>
                     </div>
@@ -67,8 +102,5 @@
         </div>
         <br><br>
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 </body>
 </html>

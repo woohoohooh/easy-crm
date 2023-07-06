@@ -1,66 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Список задач</title>
+    <title>Редактировать задачу</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <style>
-        .task {
-            border: 1px solid #ddd;
-            margin-bottom: 10px;
-            padding: 10px;
+        .container {
+            margin-top: 50px;
         }
-        .task h3 {
-            margin: 0;
+
+        .row {
+            margin-bottom: 20px;
         }
-        .task p {
-            margin: 0;
+
+        .task-col {
+            background-color: #f8f9fa;
+            padding: 20px;
+            height: 100vh;
+            overflow-y: auto;
+            border-right: 1px solid #ccc;
         }
-        .task .status {
-            font-weight: bold;
+
+        .comments-col {
+            background-color: #f8f9fa;
+            padding: 20px;
+            height: 100vh;
+            overflow-y: auto;
         }
-        .task .assigned-to {
-            color: #888;
+
+        .image-col {
+            background-color: #f8f9fa;
+            padding: 20px;
+            max-height: calc(100vh - 40px);
+            overflow: auto;
         }
-        .task .images {
-            margin-top: 5px;
-        }
-        .task .comments {
-            margin-top: 5px;
-            color: #888;
-        }
-        .status-column {
-            float: right;
-            width: 150px;
+
+        .image-col img {
+            max-width: 100%;
+            cursor: pointer;
         }
     </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var imageContainer = $('#image-container');
+            var imageInput = $('#image_base64');
+
+            $(document).on('paste', function(event) {
+                var items = (event.originalEvent || event).clipboardData.items;
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.type.indexOf('image') !== -1) {
+                        var file = item.getAsFile();
+                        var reader = new FileReader();
+                        reader.onload = function(event) {
+                            var imageUrl = event.target.result;
+                            var imgElement = $('<img>').attr('src', imageUrl);
+                            imgElement.on('click', function() {
+                                window.open(imageUrl, '_blank');
+                            });
+                            imageContainer.append(imgElement);
+                            imageInput.val(imageUrl);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
+        });
+    </script>
 </head>
 <body>
-    <h1>Список задач</h1>
-    <ul>
-        <li><a href="{% url 'create_task' %}">Создать задачу</a></li>
-    </ul>
-    {% for status, tasks in tasks_by_status.items %}
-        <div class="status-column">
-            <h2>{{ status.name }}</h2>
-        </div>
-        <div class="task-list">
-            {% for task in tasks %}
-                <div class="task">
-                    <h3>{{ task.name }}</h3>
-                    <p><span class="status">{{ task.status.name }}</span> - Назначена: <span class="assigned-to">{{ task.assign.username }}</span></p>
-                    <p>Начало: {{ task.start }}</p>
-                    <p>Оценка (начало): {{ task.estimate_start }}</p>
-                    <p>Оценка (окончание): {{ task.estimate_finish }}</p>
-                    <p>Оценка (команда): {{ task.estimate_team }}</p>
-                    {% if task.images.all %}
-                        <div class="images">Изображения: ✓</div>
-                    {% endif %}
-                    <div class="comments">Комментарии: {{ task.comments.count }}</div>
-                    <p><a href="{% url 'edit_task' task.id %}">Редактировать</a></p>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 task-col">
+                <h1><a href="{% url 'index_list' %}">←</a> Edit Task</h1>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <input type="hidden" id="image_base64" name="image_base64">
+                    <button type="submit">Save</button>
+                </form>
+            </div>
+            <div class="col-md-4 comments-col">
+                <h2>Comments</h2>
+                <form method="post" action="{% url 'create_comment' task_id=task.id %}">
+                    {% csrf_token %}
+                    <textarea name="content" placeholder="Enter comment"></textarea>
+                    <button type="submit">Add Comment</button>
+                </form>
+                <div id="comment-container">
+                    {% for comment in comments %}
+                        <p>{{ comment.content }}</p>
+                    {% endfor %}
                 </div>
-            {% empty %}
-                <p>Нет задач</p>
-            {% endfor %}
+            </div>
         </div>
-    {% endfor %}
+        <div class="row">
+            <div class="col-md-8 image-col">
+                <h2>Task Images</h2>
+                <div id="image-container">
+                    {% for image in task.images.all %}
+                        <p><img src="{{ image.file.url }}" alt="Image"></p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

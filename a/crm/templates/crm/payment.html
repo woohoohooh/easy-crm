@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <style>
+        .payment-table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid #ddd;
+        }
+        .payment-row {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            border-top: 1px solid #ddd;
+        }
+        .payment-row:first-child {
+            border-top: none;
+        }
+        .payment-cell {
+            flex-basis: 33.33%;
+            text-align: left;
+            padding: 5px;
+            border-right: 1px solid #ddd;
+        }
+        .payment-cell:first-child {
+            flex-basis: 50%;
+            border-right: none;
+        }
+        .vertical-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+        }
+        .vertical-row {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        .vertical-cell {
+            flex-basis: 33.33%;
+            text-align: left;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container"><br>
+        <h1>Payment</h1>
+        <br>
+        <h2>Task Details</h2>
+        <div class="payment-table">
+            {% for developer, tasks in tasks_by_developer.items %}
+                <div class="payment-row">
+                    <div class="payment-cell">
+                        <strong>{{ developer }}:</strong>
+                        <ul>
+                            {% for task in tasks %}
+                                <a href="{% url 'edit_task' task.id %}">{{ task.name }}</a><br>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="payment-cell"></div>
+                    <div class="payment-cell">
+                        {% for task in tasks %}
+                            {% if task.estimate_team %}
+                                {{ task.estimate_team }}
+                            {% elif task.estimate_finish %}
+                                {{ task.estimate_finish }}
+                            {% else %}
+                                —
+                            {% endif %}
+                            <br>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="payment-row">
+                    <div class="payment-cell" colspan="3">No tasks</div>
+                </div>
+            {% endfor %}
+        </div>
+        <br><br>
+        <h2>Summary</h2>
+        <div class="payment-table">
+            <div class="vertical-table">
+                <div class="vertical-row">
+                    <div class="vertical-cell">Developer</div>
+                    <div class="vertical-cell">Minutes</div>
+                    <div class="vertical-cell">Hours</div>
+                    <div class="vertical-cell">Payment (USD)</div>
+                </div>
+                {% for developer, hours_minutes in total_hours_by_developer.items %}
+                    <div class="vertical-row">
+                        <div class="vertical-cell">{{ developer }}</div>
+                        <div class="vertical-cell">{{ hours_minutes.minutes }}</div>
+                        <div class="vertical-cell">{{ hours_minutes.hours|floatformat:1 }}</div>
+                        <div class="vertical-cell">{{ total_payment_by_developer }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <br><br>
+    </div>
+</body>
+</html>
